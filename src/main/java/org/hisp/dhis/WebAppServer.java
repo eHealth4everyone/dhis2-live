@@ -52,6 +52,8 @@ public class WebAppServer extends Thread {
 
     public static final int DEFAULT_JETTY_PORT = 8080;
 
+    protected String currentPort;
+
     public static int MAX_FORM_CONTENT_SIZE = 200000000;
 
     private static final Log log = LogFactory.getLog(WebAppServer.class);
@@ -64,6 +66,7 @@ public class WebAppServer extends Thread {
         int port;
         try (Scanner scanner = new Scanner(new File(installDir + JETTY_PORT_CONF))) {
             port = scanner.nextInt();
+            currentPort = Integer.toString(port);
             log.info("Loading DHIS 2 on port: " + port);
         } catch (Exception ex) {
             log.info("Couldn't load port number from " + installDir + JETTY_PORT_CONF);

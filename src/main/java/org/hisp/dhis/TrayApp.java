@@ -38,9 +38,7 @@ import java.awt.event.ActionListener;
 import java.net.URI;
 import java.net.URL;
 
-import javax.swing.ImageIcon;
-import javax.swing.JFrame;
-import javax.swing.JOptionPane;
+import javax.swing.*;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
@@ -55,14 +53,18 @@ public class TrayApp
     private static final Log log = LogFactory.getLog(TrayApp.class);
 
     private static final String CONFIG_DIR = "/conf";
+    private static final String CONF_FILENAME = "dhis.conf";
     private static final String STOPPED_ICON = "/icons/stopped.png";
     private static final String STARTING_ICON = "/icons/starting.png";
     private static final String FAILED_ICON = "/icons/failed.png";
     private static final String RUNNING_ICON = "/icons/running.png";
     private static final String CMD_OPEN = "Open DHIS 2 Live";
     private static final String CMD_EXIT = "Exit";
+    private static final String CMD_INFO = "MORE INFO";
 
     private final WebAppServer appServer;
+
+    private DHISConfig dhisConfig;
 
     private TrayIcon trayIcon;
 
@@ -96,6 +98,8 @@ public class TrayApp
         if (installDir == null) {
             log.info("jar not installed, setting installdir to DHIS2_HOME: " + System.getenv("DHIS2_HOME"));
             installDir = System.getenv("DHIS2_HOME");
+            // remove below before commit
+            installDir = "C:\\Dropbox\\@ Installers\\DHIS2\\dhis2-live-2.24\\dhis-live";
         }
 
         System.setProperty("dhis2.home", installDir + CONFIG_DIR);
@@ -106,8 +110,11 @@ public class TrayApp
         Image image = createImage(STOPPED_ICON, "tray icon");
 
         PopupMenu popup = new PopupMenu();
+
         MenuItem openItem = new MenuItem(CMD_OPEN);
         MenuItem exitItem = new MenuItem(CMD_EXIT);
+        MenuItem infoItem = new MenuItem(CMD_INFO);
+        popup.add(infoItem);
         popup.add(openItem);
         popup.add(exitItem);
 
@@ -120,6 +127,9 @@ public class TrayApp
                 String cmd = e.getActionCommand();
 
                 switch (cmd) {
+                    case CMD_INFO:
+                        showInfo();
+                        break;
                     case CMD_OPEN:
                         launchBrowser();
                         break;
@@ -128,9 +138,10 @@ public class TrayApp
                         break;
                 }
             }
-        ;
+            ;
         };
 
+        infoItem.addActionListener(listener);
         openItem.addActionListener(listener);
         exitItem.addActionListener(listener);
 
@@ -141,6 +152,8 @@ public class TrayApp
         }
 
         appServer = new WebAppServer(installDir, this);
+        MenuItem infItem = new MenuItem("Port info: " + appServer.currentPort);
+        trayIcon.getPopupMenu().insert(infItem, 0);
 
     }
 
@@ -270,4 +283,18 @@ public class TrayApp
         result = result.replaceAll("%20", " ");
         return result;
     }
+
+    private void showInfo() {
+        dhisConfig = new DHISConfig();
+        JOptionPane.showMessageDialog(null,
+                "Database: '" + dhisConfig.dhisProp.getProperty("hibernate.connection.url") + "\n"
+                        + "URL & Port: '" + appServer.getURI() + "\n \n"
+                        + "Dialect: '" + dhisConfig.dhisProp.getProperty("hibernate.dialect") + "\n"
+                        + "Driver: '" + dhisConfig.dhisProp.getProperty("hibernate.connection.driver_class") + "\n"
+                        + "Username: '" + dhisConfig.dhisProp.getProperty("hibernate.connection.username") + "\n"
+        );
+
+    }
+
 }
+
